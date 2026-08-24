@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>nano-labs // fabio pacheco</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0c1210;
+    --bg-soft:#101a15;
+    --panel:#131f19;
+    --panel-hover:#17261e;
+    --line:#25392e;
+    --trace:#3a5a47;
+    --gold:#cda05a;
+    --gold-bright:#e8c07d;
+    --cyan:#6fd9c6;
+    --text:#dfeee5;
+    --text-dim:#8ba79a;
+    --text-dimmer:#5f7c6f;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Space Grotesk', sans-serif;
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+
+  body{
+    margin:0;
+    background:
+      linear-gradient(var(--bg) 0%, var(--bg) 100%),
+      repeating-linear-gradient(0deg, rgba(111,217,198,0.035) 0px, rgba(111,217,198,0.035) 1px, transparent 1px, transparent 42px),
+      repeating-linear-gradient(90deg, rgba(111,217,198,0.035) 0px, rgba(111,217,198,0.035) 1px, transparent 1px, transparent 42px);
+    color:var(--text);
+    font-family:var(--sans);
+    line-height:1.5;
+    min-height:100vh;
+    padding:0 0 80px 0;
+  }
+
+  a{color:inherit;}
+  ::selection{background:var(--gold); color:#101a15;}
+
+  /* ---------- header ---------- */
+
+  header{
+    max-width:900px;
+    margin:0 auto;
+    padding:56px 24px 24px 24px;
+    display:flex;
+    align-items:center;
+    gap:20px;
+    border-bottom:1px dashed var(--line);
+  }
+
+  .avatar-wrap{position:relative; flex-shrink:0;}
+  .avatar-wrap img{
+    width:76px; height:76px; border-radius:10px;
+    border:2px solid var(--trace); display:block;
+  }
+  .avatar-wrap::after{
+    content:""; position:absolute; top:-6px; left:-6px; right:-6px; bottom:-6px;
+    border:1px dashed var(--trace); border-radius:14px; pointer-events:none;
+  }
+
+  .head-text .eyebrow{
+    font-family:var(--mono); font-size:12px; letter-spacing:0.12em;
+    color:var(--cyan); text-transform:uppercase; margin-bottom:4px;
+  }
+  .head-text h1{font-size:28px; margin:0 0 4px 0; font-weight:700; letter-spacing:-0.01em;}
+  .head-text h1 span{color:var(--gold-bright);}
+  .head-text p{margin:0; color:var(--text-dim); font-size:14px;}
+  .head-text a.gh-link{font-family:var(--mono); font-size:13px; color:var(--cyan); text-decoration:none; border-bottom:1px solid transparent;}
+  .head-text a.gh-link:hover{border-bottom-color:var(--cyan);}
+
+  /* ---------- terminal intro ---------- */
+
+  .terminal{max-width:900px; margin:32px auto 40px auto; padding:0 24px;}
+  .terminal-box{
+    background:var(--panel); border:1px solid var(--line); border-radius:8px;
+    overflow:hidden; box-shadow:0 0 0 1px rgba(0,0,0,0.2), 0 20px 40px -20px rgba(0,0,0,0.6);
+  }
+  .terminal-titlebar{
+    display:flex; align-items:center; gap:8px; padding:10px 14px;
+    background:var(--bg-soft); border-bottom:1px solid var(--line);
+    font-family:var(--mono); font-size:12px; color:var(--text-dimmer);
+  }
+  .dot{width:9px;height:9px;border-radius:50%;display:inline-block;}
+  .dot.r{background:#e0685f;} .dot.y{background:#e0c05f;} .dot.g{background:#63c07a;}
+
+  .terminal-body{
+    padding:22px 24px 26px 24px; font-family:var(--mono); font-size:14.5px;
+    color:var(--text); min-height:110px;
+  }
+  .terminal-body .prompt{color:var(--cyan);}
+  .terminal-body .line{white-space:pre-wrap;}
+  .cursor{
+    display:inline-block; width:8px; height:16px; background:var(--gold-bright);
+    margin-left:2px; vertical-align:-3px; animation:blink 1s step-end infinite;
+  }
+  @keyframes blink{50%{opacity:0;}}
+
+  /* ---------- stats strip ---------- */
+
+  .stats{
+    max-width:900px; margin:0 auto 40px auto; padding:0 24px;
+    display:flex; gap:14px; flex-wrap:wrap;
+    font-family:var(--mono); font-size:12.5px; color:var(--text-dim);
+  }
+  .stats span{border:1px solid var(--line); border-radius:20px; padding:5px 12px; background:var(--panel);}
+  .stats span b{color:var(--gold-bright); font-weight:500;}
+
+  /* ---------- categories ---------- */
+
+  main{max-width:900px; margin:0 auto; padding:0 24px; display:flex; flex-direction:column; gap:18px;}
+
+  details.category{
+    background:var(--panel); border:1px solid var(--line); border-radius:10px; overflow:hidden;
+  }
+  details.category[open]{box-shadow:0 20px 40px -28px rgba(0,0,0,0.7);}
+
+  summary.cat-head{
+    list-style:none; cursor:pointer; padding:18px 20px;
+    display:flex; align-items:center; gap:14px; user-select:none; position:relative;
+  }
+  summary.cat-head::-webkit-details-marker{display:none;}
+  summary.cat-head .bracket{font-family:var(--mono); color:var(--trace); font-size:13px;}
+  summary.cat-head .icon{
+    font-size:20px; width:34px; height:34px; display:flex; align-items:center; justify-content:center;
+    background:var(--bg-soft); border:1px solid var(--line); border-radius:8px; flex-shrink:0;
+  }
+  summary.cat-head .cat-info{flex:1;}
+  summary.cat-head h2{margin:0; font-size:17px; font-weight:600; letter-spacing:0.01em;}
+  summary.cat-head .cat-desc{margin:2px 0 0 0; font-size:12.5px; color:var(--text-dim); font-family:var(--mono);}
+  summary.cat-head .count{
+    font-family:var(--mono); font-size:12px; color:var(--text-dimmer);
+    border:1px solid var(--line); border-radius:20px; padding:3px 10px; flex-shrink:0;
+  }
+  summary.cat-head .chevron{font-family:var(--mono); color:var(--gold); transition:transform 0.25s ease; flex-shrink:0;}
+  details[open] summary.cat-head .chevron{transform:rotate(90deg);}
+
+  .cat-body{
+    padding:4px 20px 22px 20px; border-top:1px dashed var(--line);
+    display:flex; flex-direction:column; gap:14px;
+  }
+
+  /* ---------- repo card ---------- */
+
+  .repo{
+    display:flex; gap:16px; background:var(--bg-soft); border:1px solid var(--line);
+    border-radius:8px; padding:16px; transition:border-color 0.15s ease;
+  }
+  .repo:hover{border-color:var(--trace);}
+
+  .repo-thumb{
+    width:112px; height:84px; border-radius:6px; overflow:hidden; flex-shrink:0;
+    background:var(--panel); border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .repo-thumb img{width:100%; height:100%; object-fit:cover; display:block;}
+  .repo-thumb .fallback{font-family:var(--mono); font-size:20px; color:var(--trace); text-align:center; padding:4px;}
+
+  .repo-info{flex:1; min-width:0;}
+  .repo-info .repo-name-row{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+
+  .repo-info .repo-name{
+    font-family:var(--mono); font-size:14.5px; font-weight:700; color:var(--gold-bright);
+    text-decoration:none; display:inline-flex; align-items:center; gap:6px;
+  }
+  .repo-info .repo-name .arrow{font-size:12px; color:var(--text-dimmer); transition:transform 0.15s ease;}
+  .repo-info .repo-name:hover .arrow{transform:translateX(3px); color:var(--cyan);}
+
+  .demo-link{
+    font-family:var(--mono); font-size:11px; color:var(--cyan); text-decoration:none;
+    border:1px solid var(--trace); border-radius:20px; padding:2px 10px;
+    display:inline-flex; align-items:center; gap:4px;
+  }
+  .demo-link:hover{background:rgba(111,217,198,0.1);}
+
+  .repo-info p{margin:6px 0 8px 0; font-size:13.5px; color:var(--text-dim);}
+
+  .tag{
+    display:inline-block; font-family:var(--mono); font-size:11px; color:var(--text-dimmer);
+    border:1px solid var(--line); border-radius:20px; padding:2px 9px; margin-right:6px;
+  }
+  .tag.fork{color:var(--cyan); border-color:var(--trace);}
+
+  /* ---------- footer ---------- */
+
+  footer{
+    max-width:900px; margin:50px auto 0 auto; padding:24px 24px 0 24px;
+    border-top:1px dashed var(--line); font-family:var(--mono); font-size:12px;
+    color:var(--text-dimmer); text-align:center;
+  }
+  footer a{color:var(--cyan); text-decoration:none;}
+
+  @media (max-width:560px){
+    header{flex-direction:column; align-items:flex-start;}
+    .repo{flex-direction:column;}
+    .repo-thumb{width:100%; height:140px;}
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .cursor{animation:none;}
+    html{scroll-behavior:auto;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="avatar-wrap">
+    <img src="https://avatars.githubusercontent.com/u/3626602?v=4" alt="nano-labs avatar">
+  </div>
+  <div class="head-text">
+    <div class="eyebrow">// my github profile</div>
+    <h1>nano<span>-</span>labs</h1>
+    <p>I'm Fabio Pacheco &middot; backend engineer by day, solder-and-Python tinkerer by night &middot; <a class="gh-link" href="https://github.com/nano-labs" target="_blank" rel="noopener">github.com/nano-labs ↗</a></p>
+  </div>
+</header>
+
+<div class="terminal">
+  <div class="terminal-box">
+    <div class="terminal-titlebar">
+      <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+      <span style="margin-left:6px;">visitor@nano-labs:~$</span>
+    </div>
+    <div class="terminal-body">
+      <span class="prompt">&gt;</span> <span id="typed-line"></span><span class="cursor"></span>
+    </div>
+  </div>
+</div>
+
+<div class="stats">
+  <span><b>29</b> repos I've made</span>
+  <span><b>6</b> categories</span>
+  <span>mostly <b>hardware</b>, <b>python</b> &amp; <b>a bit of swift</b></span>
+  <span>arctic code vault contributor</span>
+</div>
+
+<main>
+
+  <!-- 01 Robotics & Motion -->
+  <details class="category" open>
+    <summary class="cat-head">
+      <span class="bracket">[01]</span>
+      <span class="icon">🤖</span>
+      <div class="cat-info">
+        <h2>Robotics &amp; Motion</h2>
+        <p class="cat-desc">steppers, wheels and things I've made move on command</p>
+      </div>
+      <span class="count">5 repos</span>
+      <span class="chevron">&gt;</span>
+    </summary>
+    <div class="cat-body">
+
+      <a class="repo" href="https://github.com/nano-labs/2dprinter" target="_blank" rel="noopener">
+        <div class="repo-thumb"><img src="https://img.youtube.com/vi/X7q2zppkzcg/hqdefault.jpg" alt="2dprinter" loading="lazy"></div>
+        <div class="repo-info">
+          <div class="repo-name-row"><span class="repo-name">2dprinter <span class="arrow">→</span></span></div>
+          <p>My XY pen-plotter, driven by an Arduino. I wrote every bit of the SVG-to-motion logic myself instead of reusing an existing plotting library &mdash; I even admit in the build log that I did it the hard way on purpose.</p>
+          <span class="tag">Python</span>
+        </div>
+      </a>
+
+      <a class="repo" href="https://github.com/nano-labs/pan_stepper" target="_blank" rel="noopener">
+        <div class="repo-thumb"><img src="https://raw.githubusercontent.com/nano-labs/pan_stepper/master/Manual/img.png" alt="pan_stepper" loading="lazy"></div>
+        <div class="repo-info">
+          <div class="repo-name-row"><span class="repo-name">pan_stepper <span class="arrow">→</span></span></div>
+          <p>A stepper-motor camera jig I built for shooting smooth, motorized panoramic timelapses &mdash; comes with the build manual and wiring diagrams I made for it.</p>
+          <span class="tag">C++</span>
+        </div>
+      </a>
+
+      <a class="repo" href="https://github.com/nano-labs/timelapser" target="_blank" rel="noopener">
+        <div class="repo-thumb"><span class="fallback">early build</span></div>
+        <div class="repo-info">
+          <div class="repo-name-row"><span class="repo-name">timelapser <span class="arrow">→</span></span></div>
+          <p>My earlier, single-sketch pass at the panoramic timelapse rig, before I grew the idea into the fuller <code>pan_stepper</code> project.</p>
+          <span class="tag">C++</span>
+        </div>
+      </a>
+
+      <a class="repo" href="https://github.com/nano-labs/mecanom" target="_blank" rel="noopener">
+        <div class="repo-thumb"><span class="fallback">◇◇◇◇</span></div>
+        <div class="repo-info">
+          <div class="repo-name-row">
+            <span class="repo-name">mecanom <span class="arrow">→</span></span>
+            <a class="demo-link" href="https://nano-labs.github.io/mecanom/simulator.html" target="_blank" rel="noopener">🌐 live demo</a>
+          </div>
+          <p>A browser-based simulator I made for a mecanum-wheel robot chassis, so I could work out omnidirectional drive kinematics before wiring up the real motors.</p>
+          <span class="tag">HTML/JS</span>
+        </div>
+      </a>
+
+      <a class="repo" href="https://github.com/nano-labs/robo-v1" target="_blank" rel="noopener">
+        <div class="repo-thumb"><span class="fallback">v1</span></div>
+        <div class="repo-info">
+          <div class="repo-name-row"><span class="repo-name">robo-v1 <span class="arrow">→</span></span></div>
+          <p>A rover prototype of mine pairing an Arduino sketch with a Python-side runner script &mdash; I filed it under the About section simply, and honestly, as "prototype."</p>
+          <span class="tag">C++ / Python</span>
+        </div>
+      </a>
+
+    </div>
+  </details>
+
+  <!-- 02 Desk Gadgets & Keyboards -->
+  <details class="category">
+    <summary class="cat-head">
+      <span class="bracket">[02]</span>
+      <span class="icon">⌨️</span>
+      <div class="cat-info">
+        <h2>Desk Gadgets &amp; Keyboards</h2>
+        <p class="cat-desc">small embedded builds I keep on (or near) my desk</p>
+      </div>
+      <span class="count">7 repos</span>
+      <span class="chevron">&gt;</span>
+    </summary>
+    <div class="cat-body">
+
+      <a class="repo" href="https://github.com/nano-labs/keyboard" target="_blank" rel="noopener">
+        <div class="repo-thumb"><img src="https://raw.githubusercontent.com/nano-labs/keyboard/main/img/keyboard.jpg" alt="keyboard" loading="lazy"></div>
+        <div class="repo-info">
+          <div class="repo-name-row"><span class="repo-name">keyboard <span class="arrow">→</span></span></div>
+          <p>My fully scratch-built auxiliary mechanical keyboard &mdash; custom PCB, 3D-printed enclosure, hand-drawn keycap art, and a home-made Home/End rocker switch I designed myself. Circuit and PCB files are on OSHWLab.</p>
+          <span class="tag">C++</span>
+        </div>
+      </a>
+
+      <a class="repo" href="https://github.com/nano-labs/keyboard-small" target="_blank" rel="noopener">
+        <div class="repo-thumb"><span class="fallback">⌨</span></div>
+        <div class="repo-info">
+          <div class="repo-name-row"><span class="repo-name">keyboard-small <span class="arrow">→</span></span></div>
+          <p>A more compact companion to my auxiliary keyboard, with its own PCB, a Python-based key manager I wrote, and custom keycap bitmap art.</p>
+          <span class="tag">Python</span>
+        </div>
+      </a>
+
+      <a class="repo" href="https://github.com/nano-labs/binary_clock" target="_blank" rel="noopener">
+        <div class="repo-thumb"><span class="fallback">01:10</span></div>
+        <div class="repo-info">
+          <div class="repo-name-row"><span class="repo-name">binary_clock <span class="arrow">→</span></span></div>
+          <p>A clock I built that tells time the nerdy way &mdash; LEDs blinking out hours, minutes and seconds in binary, driven from an AVR/Arduino board.</p>
+          <span class="tag">C++</span>
+        </div>
+      </a>
+
+      <a class="repo" href="https://github.com/nano-labs/annas_clock" target="_blank" rel="noopener">
+        <div class="repo-thumb"><span class="fallback">◷</span></div>
+        <div class="repo-info">
+          <div class="repo-name-row"><span class="repo-name">annas_clock <span class="arrow">→</span></span></div>
+          <p>A custom clock I built with its own small server component and a physical enclosure &mdash; made, going by the name, for someone special.</p>
+          <span class="tag">Python</span>
+        </div>
+      </a>
+
+      <a class="repo" href="https://github.com/nano-labs/sdmanager" target="_blank" rel="noopener">
+        <div class="repo-thumb"><img src="https://raw.githubusercontent.com/nano-labs/sdmanager/main/imgs/transfer.gif" alt="sdmanager" loading="lazy"></div>
+        <div class="repo-info">
+          <div class="repo-name-row"><span class="repo-name">sdmanager <span class="arrow">→</span></span></div>
+          <p>A tool I made for moving files onto an SD card by talking to an Arduino over serial, so the card never has to leave the device it's plugged into.</p>
+          <span class="tag">C++ / Python</span>
+        </div>
+      </a>
+
+      <a class="repo" href="https://github.com/nano-labs/wtf" target="_blank" rel="noopener">
+        <div class="repo-thumb"><img src="https://raw.githubusercontent.com/nano-labs/wtf/main/images/wtf.png" alt="wtf - Work Trainer Feature" loading="lazy"></div>
+        <div class="repo-info">
+          <div class="repo-name-row"><span class="repo-name">wtf <span class="arrow">→</span></span></div>
+          <p>Short for "Work Trainer Feature" &mdash; an ESP8266-powered desk gadget I built, with a 3D-printed shell I modeled in Fusion 360, to nudge myself into better work habits.</p>
+          <span class="tag">C++</span>
+        </div>
+      </a>
+
+      <a class="repo" href="https://github.com/nano-labs/jira-display" target="_blank" rel="noopener">
+        <div class="repo-thumb"><img src="https://img.youtube.com/vi/UYbQGstgCt0/hqdefault.jpg" alt="jira-display" loading="lazy"></div>
+        <div class="repo-info">
+          <div class="repo-name-row"><span class="repo-name">jira-display <span class="arrow">→</span></span></div>
+          <p>An Arduino Nano and 128x32 OLED display I built to start and stop my Jira issue timers at the press of a button, and alert me if I forget one is still running.</p>
+          <span class="tag">Python / C++</span>
+        </div>
+      </a>
+
+    </div>
+  </details>
+
+  <!-- 03 Puzzles & Solvers -->
+  <details class="category">
+    <summary class="cat-head">
+      <span class="bracket">[03]</span>
+      <span class="icon">🧩</span>
+      <div class="cat-info">
+        <h2>Puzzles &amp; Solvers</h2>
+        <p class="cat-desc">code I wrote purely because a puzzle looked solvable</p>
+      </div>
+      <span class="count">4 repos</span>
+      <span class="chevron">&gt;</span>
+    </summary>
+    <div class="cat-body">
+
+      <a class="repo" href="https://github.com/nano-labs/katamino" target="_blank" rel="noopener">
+        <div class="repo-thumb"><span class="fallback">▦▤▥</span></div>
+        <div class="repo-info">
+          <div class="repo-name-row">
+            <span class="repo-name">katamino <span class="arrow">→</span></span>
+            <a class="demo-link" href="https://nano-labs.github.io/katamino/" target="_blank" rel="noopener">🌐 live demo</a>
+          </div>
+          <p>My brute-force solver for the Katamino pentomino board game, with a static browser viewer I built for stepping back through every solution it finds.</p>
+          <span class="tag">Python / HTML</span>
+        </div>
+      </a>
+
+      <a class="repo" href="https://github.com/nano-labs/sudoku-solver" target="_blank" rel="noopener">
+        <div class="repo-thumb"><img src="https://raw.githubusercontent.com/nano-labs/sudoku-solver/main/imgs/sudoku-solver.gif" alt="sudoku-solver" loading="lazy"></div>
+        <div class="repo-info">
+          <div class="repo-name-row"><span class="repo-name">sudoku-solver <span class="arrow">→</span></span></div>
+          <p>My from-scratch Sudoku solver &mdash; I made a point of noting in the README that no AI was used to write it.</p>
+          <span class="tag">Python</span>
+        </div>
+      </a>
+
+      <a class="repo" href="https://github.com/nano-labs/binary-puzzle-solver" target="_blank" rel="noopener">
+        <div class="repo-thumb"><img src="https://raw.githubusercontent.com/nano-labs/binary-puzzle-solver/main/imgs/binary-solver.gif" alt="binary-puzzle-solver" loading="lazy"></div>
+        <div class="repo-info">
+          <div class="repo-name-row"><span class="repo-name">binary-puzzle-solver <span class="arrow">→</span></span></div>
+          <p>My solver for the binary puzzle &mdash; a logic grid filled with 0s and 1s under adjacency and uniqueness rules &mdash; built in the same brute-force spirit as my Sudoku solver.</p>
+          <span class="tag">Python</span>
+        </div>
+      </a>
+
+      <a class="repo" href="https://github.com/nano-labs/catan" target="_blank" rel="noopener">
+        <div class="repo-thumb"><span class="fallback">⬡⬡⬡</span></div>
+        <div class="repo-info">
+          <div class="repo-name-row">
+            <span class="repo-name">catan <span class="arrow">→</span></span>
+            <a class="demo-link" href="https://nano-labs.github.io/catan/" target="_blank" rel="noopener">🌐 live demo</a>
+          </div>
+          <p>A single-file, mobile-friendly page I made for calculating dice-roll probabilities during a game of Settlers of Catan.</p>
+          <span class="tag">HTML/JS</span>
+        </div>
+      </a>
+
+    </div>
+  </details>
+
+  <!-- 04 iOS & watchOS -->
+  <details class="category">
+    <summary class="cat-head">
+      <span class="bracket">[04]</span>
+      <span class="icon">📱</span>
+      <div class="cat-info">
+        <h2>iOS &amp; watchOS</h2>
+        <p class="cat-desc">the side of my stack that isn't a terminal</p>
+      </div>
+      <span class="count">1 repo</span>
+      <span class="chevron">&gt;</span>
+    </summary>
+    <div class="cat-body">
+
+      <a class="repo" href="https://github.com/nano-labs/Phone-status" target="_blank" rel="noopener">
+        <div class="repo-thumb"><span class="fallback">📱⌚</span></div>
+        <div class="repo-info">
+          <div class="repo-name-row"><span class="repo-name">Phone-status <span class="arrow">→</span></span></div>
+          <p>Source for my "Phone Status" iOS and watchOS app &mdash; a native Swift project I built with its own Watch app and widget extension, for checking battery and connectivity at a glance.</p>
+          <span class="tag">Swift</span>
+        </div>
+      </a>
+
+    </div>
+  </details>
+
+  <!-- 05 Debugging & Profiling Tools -->
+  <details class="category">
+    <summary class="cat-head">
+      <span class="bracket">[05]</span>
+      <span class="icon">🐛</span>
+      <div class="cat-info">
+        <h2>Debugging &amp; Profiling Tools</h2>
+        <p class="cat-desc">for when print() isn't cutting it anymore</p>
+      </div>
+      <span class="count">5 repos</span>
+      <span class="chevron">&gt;</span>
+    </summary>
+    <div class="cat-body">
+
+      <a class="repo" href="https://github.com/nano-labs/django-query-debugger" target="_blank" rel="noopener">
+        <div class="repo-thumb"><span class="fallback">SQL</span></div>
+        <div class="repo-info">
+          <div class="repo-name-row"><span class="repo-name">django-query-debugger <span class="arrow">→</span></span></div>
+          <p>A tool I made that prints every SQL query my Django code fires off, next to the exact line of code that triggered it &mdash; my fast way to spot N+1 queries without reaching for a full profiler.</p>
+          <span class="tag">Python</span>
+        </div>
+      </a>
+
+      <a class="repo" href="https://github.com/nano-labs/django-query-blocker" target="_blank" rel="noopener">
+        <div class="repo-thumb"><span class="fallback">⛔SQL</span></div>
+        <div class="repo-info">
+          <div class="repo-name-row"><span class="repo-name">django-query-blocker <span class="arrow">→</span></span></div>
+          <p>The stricter sibling I built to the query debugger: used as a context manager or decorator, it raises an exception the moment a guarded block tries to sneak in an extra ORM query.</p>
+          <span class="tag">Python</span>
+        </div>
+      </a>
+
+      <a class="repo" href="https://github.com/nano-labs/line-profiler-decorator" target="_blank" rel="noopener">
+        <div class="repo-thumb"><span class="fallback">@prof</span></div>
+        <div class="repo-info">
+          <div class="repo-name-row"><span class="repo-name">line-profiler-decorator <span class="arrow">→</span></span></div>
+          <p>A decorator I wrote around Python's <code>line_profiler</code>, adding options to aggregate timings across repeated calls, group them by a custom key, follow into other functions, or write results straight to a file.</p>
+          <span class="tag">Python</span>
+        </div>
+      </a>
+
+      <a class="repo" href="https://github.com/nano-labs/line_profiler" target="_blank" rel="noopener">
+        <div class="repo-thumb"><span class="fallback">⏱</span></div>
+        <div class="repo-info">
+          <div class="repo-name-row"><span class="repo-name">line_profiler <span class="arrow">→</span></span> <span class="tag fork">fork</span></div>
+          <p>My personal fork of the well-known <code>line_profiler</code> package for line-by-line Python timing &mdash; I keep it around as the base for my decorator above.</p>
+          <span class="tag">Python / Cython</span>
+        </div>
+      </a>
+
+      <a class="repo" href="https://github.com/nano-labs/requests_debugger" target="_blank" rel="noopener">
+        <div class="repo-thumb"><span class="fallback">→ curl</span></div>
+        <div class="repo-info">
+          <div class="repo-name-row"><span class="repo-name">requests_debugger <span class="arrow">→</span></span></div>
+          <p>A drop-in helper I made that logs every call made through Python's <code>requests</code> library, with a full traceback to the exact line responsible, and can even print the call back as a ready-to-paste cURL command. I'm explicit that it's not for production.</p>
+          <span class="tag">Python</span>
+        </div>
+      </a>
+
+    </div>
+  </details>
+
+  <!-- 06 Python Utilities & Libraries -->
+  <details class="category">
+    <summary class="cat-head">
+      <span class="bracket">[06]</span>
+      <span class="icon">🐍</span>
+      <div class="cat-info">
+        <h2>Python Utilities &amp; Libraries</h2>
+        <p class="cat-desc">small, sharp tools I built for everyday work</p>
+      </div>
+      <span class="count">7 repos</span>
+      <span class="chevron">&gt;</span>
+    </summary>
+    <div class="cat-body">
+
+      <a class="repo" href="https://github.com/nano-labs/dkill" target="_blank" rel="noopener">
+        <div class="repo-thumb"><img src="https://raw.githubusercontent.com/nano-labs/dkill/main/imgs/dkill.gif" alt="dkill" loading="lazy"></div>
+        <div class="repo-info">
+          <div class="repo-name-row"><span class="repo-name">dkill <span class="arrow">→</span></span></div>
+          <p>An interactive CLI I made that lists my running Docker containers and lets me pick which ones to kill with a spacebar and enter, instead of copy-pasting container IDs.</p>
+          <span class="tag">Python</span>
+        </div>
+      </a>
+
+      <a class="repo" href="https://github.com/nano-labs/dstart" target="_blank" rel="noopener">
+        <div class="repo-thumb"><img src="https://raw.githubusercontent.com/nano-labs/dstart/main/imgs/dstart.gif" alt="dstart" loading="lazy"></div>
+        <div class="repo-info">
+          <div class="repo-name-row"><span class="repo-name">dstart <span class="arrow">→</span></span></div>
+          <p><code>dkill</code>'s companion tool, also mine: an interactive picker for choosing which docker-compose services to bring up, instead of typing them all out by hand.</p>
+          <span class="tag">Python</span>
+        </div>
+      </a>
+
+      <a class="repo" href="https://github.com/nano-labs/envee" target="_blank" rel="noopener">
+        <div class="repo-thumb"><span class="fallback">$ENV</span></div>
+        <div class="repo-info">
+          <div class="repo-name-row"><span class="repo-name">envee <span class="arrow">→</span></span></div>
+          <p>A small abstraction I made that lets me read and write environment variables like plain Python attributes, transparently JSON-encoding lists and dicts so complex values round-trip cleanly.</p>
+          <span class="tag">Python</span>
+        </div>
+      </a>
+
+      <a class="repo" href="https://github.com/nano-labs/pyfwf3" target="_blank" rel="noopener">
+        <div class="repo-thumb"><span class="fallback">| | |</span></div>
+        <div class="repo-info">
+          <div class="repo-name-row"><span class="repo-name">pyfwf3 <span class="arrow">→</span></span></div>
+          <p>A parser and query toolkit I built for fixed-width-field files &mdash; the kind where every record packs its data into fixed column positions &mdash; with a Django-ORM-style filter/exclude/order_by interface I designed. Born out of me wrangling huge stock market data dumps.</p>
+          <span class="tag">Python</span>
+        </div>
+      </a>
+
+      <a class="repo" href="https://github.com/nano-labs/json_schema" target="_blank" rel="noopener">
+        <div class="repo-thumb"><span class="fallback">{ }</span></div>
+        <div class="repo-info">
+          <div class="repo-name-row"><span class="repo-name">json_schema <span class="arrow">→</span></span></div>
+          <p>A lib I wrote that auto-generates a schema from a sample JSON document, then validates other JSON payloads against that schema &mdash; including regex-matched string fields.</p>
+          <span class="tag">Python</span>
+        </div>
+      </a>
+
+      <a class="repo" href="https://github.com/nano-labs/boleto" target="_blank" rel="noopener">
+        <div class="repo-thumb"><img src="https://raw.githubusercontent.com/nano-labs/boleto/master/barcode.jpg" alt="boleto barcode" loading="lazy"></div>
+        <div class="repo-info">
+          <div class="repo-name-row"><span class="repo-name">boleto <span class="arrow">→</span></span></div>
+          <p>My reader for the barcode printed on Brazilian "boleto" payment slips, decoding the FEBRABAN-standard digits into their banking, currency and due-date fields.</p>
+          <span class="tag">Python</span>
+        </div>
+      </a>
+
+      <a class="repo" href="https://github.com/nano-labs/tolerance_calculator" target="_blank" rel="noopener">
+        <div class="repo-thumb"><span class="fallback">⌀ ±</span></div>
+        <div class="repo-info">
+          <div class="repo-name-row"><span class="repo-name">tolerance_calculator <span class="arrow">→</span></span></div>
+          <p>A small Portuguese-language library I wrote for calculating mechanical shaft/hole fit tolerances &mdash; the kind of math that shows up in machining and manufacturing design work I've done.</p>
+          <span class="tag">Python</span>
+        </div>
+      </a>
+
+    </div>
+  </details>
+
+</main>
+
+<footer>
+  <p>my public repository data, pulled from <a href="https://github.com/nano-labs" target="_blank" rel="noopener">github.com/nano-labs</a>.</p>
+</footer>
+
+<script>
+  const fullText = "What are you doing here? How did you find this page? WHO SENT YOU? \n\nNah, you're cool... Anyway, as you're here already, I can at least show you around.";
+  const el = document.getElementById('typed-line');
+  let i = 0;
+  function typeNext(){
+    if(i <= fullText.length){
+      el.textContent = fullText.slice(0, i);
+      i++;
+      const delay = 14 + Math.random()*22;
+      setTimeout(typeNext, delay);
+    }
+  }
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    el.textContent = fullText;
+  } else {
+    typeNext();
+  }
+</script>
+
+</body>
+</html>
